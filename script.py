@@ -13,7 +13,7 @@ from io import BytesIO
 # FastAPI Backend
 app = FastAPI()
 DB_FILE = "forecast.db"
-FILES = ["consomme_mix_1.xls", "consomme_mix_2.xls", "consomme_mix_3.xls"]
+FILES = ["conso_mix_RTE_2023.xls", "conso_mix_RTE_2024.xls", "conso_mix_RTE_2025.xls"]
 
 # Database Initialization
 def init_db():
