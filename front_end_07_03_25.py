@@ -1,8 +1,8 @@
-import pydash as dash
-from dash import dcc, html, Input, Output, Dash
 import pandas as pd
-import plotly.express as px
 import re
+import dash
+from dash import dcc, html, Input, Output
+import plotly.express as px
 
 # Fonction pour charger et structurer les données
 def load_data(file_path):
@@ -19,18 +19,22 @@ def load_data(file_path):
             if match:
                 current_date = match.group(1)  # Extraire la date au format XX/XX/XXXX
 
-        # Vérifie si la ligne contient les données horaires
-        elif isinstance(row[0], str) and re.match(r"\d{2}:\d{2}", row[0]):  # Format "HH:MM"
+        # Vérifie si la ligne contient les données horaires (ex: "0:00", "12:15")
+        elif isinstance(row[0], str) and re.match(r"\d{1,2}:\d{2}", row[0]):  # Format "H:MM" ou "HH:MM"
             if current_date:
-                data_list.append([
-                    pd.to_datetime(f"{current_date} {row[0]}", format="%d/%m/%Y %H:%M"),
-                    row[1],  # PrévisionJ-1
-                    row[2],  # PrévisionJ
-                    row[3]   # Consommation
-                ])
+                try:
+                    full_datetime = pd.to_datetime(f"{current_date} {row[0]}", format="%d/%m/%Y %H:%M")
+                    data_list.append([
+                        full_datetime,
+                        row[1],  # PrévisionJ-1
+                        row[2],  # PrévisionJ
+                        row[3]   # Consommation
+                    ])
+                except Exception as e:
+                    print(f"Erreur de parsing à la ligne {i}: {e}")
 
     # Création du DataFrame
-    df_clean = pd.DataFrame(data_list, columns=["date", "prevision_j-", "prevision_j", "consommation"])
+    df_clean = pd.DataFrame(data_list, columns=["date", "prevision_j_1", "prevision_j", "consommation"])
     
     return df_clean
 
@@ -41,11 +45,10 @@ conso_2025 = load_data("conso_mix_RTE_2025.xlsx")
 
 # Concaténation des données
 df = pd.concat([conso_2023, conso_2024, conso_2025])
-
 df = df.sort_values("date")  # Tri par date
 
 # Initialisation de l'application Dash
-app = Dash(__name__)
+app = dash.Dash(__name__)
 
 app.layout = html.Div([
     html.H1("Visualisation des données de consommation RTE"),
@@ -58,20 +61,31 @@ app.layout = html.Div([
         end_date=df['date'].max()
     ),
     
-    dcc.Graph(id='time-series-graph')
+    dcc.Graph(id='time-series-graph'),
+
+    # Ajout d'un menu déroulant pour choisir la variable à afficher
+    dcc.Dropdown(
+        id='variable-selector',
+        options=[
+            {'label': 'Consommation', 'value': 'consommation'},
+            {'label': 'Prévision J-1', 'value': 'prevision_j_1'},
+            {'label': 'Prévision J', 'value': 'prevision_j'}
+        ],
+        value='consommation',
+        clearable=False
+    )
 ])
 
 @app.callback(
     Output('time-series-graph', 'figure'),
     Input('date-picker', 'start_date'),
-    Input('date-picker', 'end_date')
+    Input('date-picker', 'end_date'),
+    Input('variable-selector', 'value')
 )
-def update_graph(start_date, end_date):
+def update_graph(start_date, end_date, selected_variable):
     filtered_df = df[(df['date'] >= start_date) & (df['date'] <= end_date)]
-    fig = px.line(filtered_df, x='date', y='consommation', title="Consommation Électrique RTE")
+    fig = px.line(filtered_df, x='date', y=selected_variable, title=f"Évolution de {selected_variable}")
     return fig
 
 if __name__ == '__main__':
     app.run_server(debug=True)
-
-
