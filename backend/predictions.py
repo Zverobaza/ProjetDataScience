@@ -6,8 +6,15 @@ def make_predictions(data):
     sarimax_model = train_sarimax_model(data)
     kf = kalman_filter(data)
 
+    # Appliquer le filtre de Kalman
+    filtered_values = []
+    for consommation in data:
+        kf.predict()
+        kf.update([[consommation]])
+        filtered_values.append(kf.x[0, 0])
+
     return {
         "AR": ar_model.predict(10).tolist(),
         "SARIMAX": sarimax_model.forecast(10).tolist(),
-        "Kalman": [kf.x]  # Exemple, à adapter
+        "Kalman": filtered_values
     }

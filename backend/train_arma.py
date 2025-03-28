@@ -1,83 +1,37 @@
-import pandas as pd
-from statsmodels.tsa.arima.model import ARIMA
 import os
 import joblib
 import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
+from statsmodels.tsa.arima.model import ARIMA
+from chargement_donnes import load_consumption_data  # Importer la fonction de chargement des données
 
-# Étape 1 : Définir les chemins d'accès aux fichiers CSV
+# Charger les données
 data_dir = os.path.join(os.path.dirname(__file__), '../data')
-files = [
-    os.path.join(data_dir, 'energy_data2023.csv'),
-    os.path.join(data_dir, 'energy_data2024.csv'),
-    os.path.join(data_dir, 'energy_data2025.csv')
-]
+consumption_series = load_consumption_data(data_dir)
 
-# Étape 2 : Lire les fichiers CSV
-dataframes = []
-for file in files:
-    # Lire le fichier CSV avec la colonne 'datetime'
-    df = pd.read_csv(file, sep=';', parse_dates=['datetime'], dayfirst=True)
-    dataframes.append(df)
+# Entraîner le modèle ARMA
+def train_arma_model(data):
+    """
+    Entraîne un modèle ARMA (AutoRegressif Moyenne Mobile) et retourne le modèle entraîné.
+    """
+    model = ARIMA(data, order=(1, 0, 1))
+    results = model.fit()
+    return results
 
-# Étape 3 : Combiner les données en un seul DataFrame
-combined_df = pd.concat(dataframes, ignore_index=True)
+# Entraîner et sauvegarder le modèle
+results = train_arma_model(consumption_series)
+model_path = os.path.join(os.path.dirname(__file__), 'arma_model.pkl')
+joblib.dump(results, model_path)
+print(f"Modèle ARMA sauvegardé sous '{model_path}'.")
 
-# Étape 4 : Préparer les données pour l'analyse des séries temporelles
-# Trier par datetime
-combined_df = combined_df.sort_values(by='datetime')
-
-# Définir la colonne 'datetime' comme index
-combined_df.set_index('datetime', inplace=True)
-
-# Sélectionner la colonne 'Consommation' pour l'analyse
-consumption_series = combined_df['Consommation']
-
-# Étape 5 : Entraîner un modèle ARMA (ARIMA avec d=0)
-p = 1  # Ordre AR (AutoRegressive)
-q = 1  # Ordre MA (Moving Average)
-model = ARIMA(consumption_series, order=(p, 0, q))
-results = model.fit()
-
-# Afficher un résumé du modèle
-print(results.summary())
-
-# Prédictions
+# Visualiser les prédictions
 predictions = results.predict(start=0, end=len(consumption_series)-1)
 
-# Étape 6 : Sauvegarder le modèle
-joblib.dump(results, 'arima_model.pkl')
-print("Modèle ARIMA sauvegardé sous 'arima_model.pkl'.")
-
-# Étape 7 : Rééchantillonner les données par jour (moyenne quotidienne)
-consumption_daily = consumption_series.resample('D').mean()
-predictions_daily = predictions.resample('D').mean()
-
-# Étape 8 : Créer une figure avec deux sous-graphiques côte à côte
-fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(16, 6))
-
-# Graphique 1 : Valeurs réelles (quotidiennes)
-ax1.plot(consumption_daily.index, consumption_daily, label='Valeurs réelles', color='blue')
-ax1.set_title('Valeurs réelles de la Consommation (Quotidiennes)')
-ax1.set_xlabel('Date')
-ax1.set_ylabel('Consommation')
-ax1.xaxis.set_major_formatter(mdates.DateFormatter('%d/%m/%Y'))
-ax1.tick_params(axis='x', rotation=45)
-ax1.legend()
-ax1.grid()
-
-# Graphique 2 : Prédictions (quotidiennes)
-ax2.plot(predictions_daily.index, predictions_daily, label='Prédictions', color='red', linestyle='--')
-ax2.set_title('Prédictions ARIMA de la Consommation (Quotidiennes)')
-ax2.set_xlabel('Date')
-ax2.set_ylabel('Consommation')
-ax2.xaxis.set_major_formatter(mdates.DateFormatter('%d/%m/%Y'))
-ax2.tick_params(axis='x', rotation=45)
-ax2.legend()
-ax2.grid()
-
-# Ajuster l'espace entre les sous-graphiques
-plt.tight_layout()
-
-# Afficher la figure
+plt.figure(figsize=(12, 6))
+plt.plot(consumption_series, label='Consommation réelle', color='blue')
+plt.plot(predictions, label='Prédictions ARMA', color='orange', linestyle='dashed')
+plt.title('Prédictions ARMA vs Consommation réelle')
+plt.xlabel('Date')
+plt.ylabel('Consommation')
+plt.legend()
+plt.grid()
 plt.show()
