@@ -39,9 +39,9 @@ def load_data(file_path):
     return df_clean
 
 # Chargement des fichiers Excel
-conso_2023 = load_data("conso_mix_RTE_2023.xlsx")
-conso_2024 = load_data("conso_mix_RTE_2024.xlsx")
-conso_2025 = load_data("conso_mix_RTE_2025.xlsx")
+conso_2023 = load_data("/Users/macos/Desktop/ProjetDataScience/data/energy_data2023.csv")
+conso_2024 = load_data("/Users/macos/Desktop/ProjetDataScience/data/energy_data2024.csv")
+conso_2025 = load_data("/Users/macos/Desktop/ProjetDataScience/data/energy_data2025.csv")
 
 # Concaténation des données
 df = pd.concat([conso_2023, conso_2024, conso_2025])

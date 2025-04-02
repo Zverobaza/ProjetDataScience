@@ -6,6 +6,7 @@ from statsmodels.tsa.stattools import adfuller
 from statsmodels.tsa.seasonal import seasonal_decompose
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 import pmdarima as pm  # Pour Auto-ARIMA
+from pathlib import Path
 
 sns.set_style("whitegrid")  # Amélioration visuelle des graphiques
 
@@ -105,7 +106,11 @@ def auto_arima_selection(series):
     return model
 
 # 📂 Chargement des données
-file_path = "energy_data2023.csv"
+#PROJECT_ROOT = Path(__file__).parent.parent
+#DATA_DIR = PROJECT_ROOT / "data"
+#data_path = str(DATA_DIR)
+
+file_path = "/Users/macos/Desktop/ProjetDataScience/data/energy_data2023.csv"
 df = read_energy_data(file_path)
 
 if df is not None:
