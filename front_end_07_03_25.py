@@ -6,7 +6,7 @@ import plotly.express as px
 
 # Fonction pour charger et structurer les données
 def load_data(file_path):
-    df = pd.read_excel(file_path, engine='openpyxl', header=None)  # Lecture brute du fichier sans en-tête
+    df = pd.read_csv(file_path, header=None)  # Lecture brute du fichier sans en-tête
     data_list = []  # Liste pour stocker les données finales
     current_date = None  # Variable pour suivre la date courante
 
@@ -39,9 +39,9 @@ def load_data(file_path):
     return df_clean
 
 # Chargement des fichiers Excel
-conso_2023 = load_data("/Users/macos/Desktop/ProjetDataScience/data/energy_data2023.csv")
-conso_2024 = load_data("/Users/macos/Desktop/ProjetDataScience/data/energy_data2024.csv")
-conso_2025 = load_data("/Users/macos/Desktop/ProjetDataScience/data/energy_data2025.csv")
+conso_2023 = load_data("energy_data2023.csv")
+conso_2024 = load_data("energy_data2024.csv")
+conso_2025 = load_data("energy_data2025.csv")
 
 # Concaténation des données
 df = pd.concat([conso_2023, conso_2024, conso_2025])

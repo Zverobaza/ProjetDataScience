@@ -11,7 +11,7 @@ def home():
 @app.post("/predict/")
 def predict():
     # Charger les données
-    df = pd.read_excel("data/conso_mix_RTE_2025.xlsx", engine='openpyxl')
+    df = pd.read_csv("energy_data2023.csv")
 
     # Sélectionner les données de consommation
     data = df.iloc[:, 3].dropna().tolist()  # Colonne "Consommation"
